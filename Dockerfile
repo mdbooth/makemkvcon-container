@@ -5,7 +5,7 @@ FROM    registry.fedoraproject.org/fedora:36 as ffmpeg_build
 
 SHELL   ["/bin/bash", "-o", "pipefail", "-c"]
 RUN     dnf install -y gcc-c++ nasm diffutils
-ARG     FFMPEG=5.0.1
+ARG     FFMPEG=5.1.2
 
 # Download
 WORKDIR /build
@@ -31,7 +31,7 @@ FROM    registry.fedoraproject.org/fedora:36 as makemkv_build
 
 SHELL   ["/bin/bash", "-o", "pipefail", "-c"]
 RUN     dnf install -y gcc-c++ openssl-devel expat-devel zlib-devel qt5-qtbase-devel diffutils file
-ARG     MAKEMKV=1.17.0
+ARG     MAKEMKV=1.17.2
 
 # Download
 WORKDIR /build
@@ -86,3 +86,10 @@ FROM makemkvcon-nojava as makemkvcon
 
 RUN	microdnf install -y java-17-openjdk-headless && microdnf clean all
 COPY	--from=makemkv_build /usr/share/MakeMKV/ /usr/share/MakeMKV/
+
+FROM makemkvcon as makemkvcon-rip
+
+RUN     microdnf install -y util-linux && microdnf clean all
+
+COPY	rip-device.sh /rip-device.sh
+ENTRYPOINT	["/rip-device.sh"]

@@ -1,8 +1,8 @@
-MAKEMKV ?= 1.17.0
-FFMPEG ?= 5.0.1
+MAKEMKV ?= 1.17.2
+FFMPEG ?= 5.1.2
 REGISTRY ?= quay.io/mbooth
 
-image_targets=makemkvcon-nojava makemkvcon
+image_targets=makemkvcon-nojava makemkvcon makemkvcon-rip
 
 .PHONY: all
 all: $(image_targets)
