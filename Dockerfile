@@ -1,7 +1,7 @@
 ##
 ## ffmpeg
 ##
-FROM    registry.fedoraproject.org/fedora:36 as ffmpeg_build
+FROM    registry.fedoraproject.org/fedora:37 as ffmpeg_build
 
 SHELL   ["/bin/bash", "-o", "pipefail", "-c"]
 RUN     dnf install -y gcc-c++ nasm diffutils
@@ -31,7 +31,7 @@ FROM    registry.fedoraproject.org/fedora:36 as makemkv_build
 
 SHELL   ["/bin/bash", "-o", "pipefail", "-c"]
 RUN     dnf install -y gcc-c++ openssl-devel expat-devel zlib-devel qt5-qtbase-devel diffutils file
-ARG     MAKEMKV=1.17.2
+ARG     MAKEMKV=1.17.3
 
 # Download
 WORKDIR /build
@@ -93,3 +93,10 @@ RUN     microdnf install -y util-linux && microdnf clean all
 
 COPY	rip-device.sh /rip-device.sh
 ENTRYPOINT	["/rip-device.sh"]
+
+FROM makemkvcon as makemkvcon-backup
+
+RUN     microdnf install -y util-linux && microdnf clean all
+
+COPY	backup-device.sh /backup-device.sh
+ENTRYPOINT	["/backup-device.sh"]
