@@ -1,11 +1,15 @@
+ARG     MAKEMKV=1.17.5
+ARG     FFMPEG=5.1.3 # Makemkv 1.17.4 doesn't build against 6.0
+ARG     FEDORA=38
+
 ##
 ## ffmpeg
 ##
-FROM    registry.fedoraproject.org/fedora:37 as ffmpeg_build
+FROM    registry.fedoraproject.org/fedora:${FEDORA} as ffmpeg_build
+ARG     FFMPEG
 
 SHELL   ["/bin/bash", "-o", "pipefail", "-c"]
 RUN     dnf install -y gcc-c++ nasm diffutils
-ARG     FFMPEG=5.1.2
 
 # Download
 WORKDIR /build
@@ -22,16 +26,16 @@ RUN     tar zxvf ffmpeg-${FFMPEG}.tar.gz
 WORKDIR /build/ffmpeg-"${FFMPEG}"
 RUN     dnf install -y diffutils
 RUN     ./configure --prefix=/ffmpeg --enable-static --disable-shared --enable-pic
-RUN     make install
+RUN     make install -j8
 
 ##
 ## MakeMKV
 ##
-FROM    registry.fedoraproject.org/fedora:36 as makemkv_build
+FROM    registry.fedoraproject.org/fedora:${FEDORA} as makemkv_build
+ARG     MAKEMKV
 
 SHELL   ["/bin/bash", "-o", "pipefail", "-c"]
 RUN     dnf install -y gcc-c++ openssl-devel expat-devel zlib-devel qt5-qtbase-devel diffutils file
-ARG     MAKEMKV=1.17.3
 
 # Download
 WORKDIR /build
@@ -49,19 +53,19 @@ COPY --from=ffmpeg_build /ffmpeg/ /ffmpeg/
 RUN     tar zxvf makemkv-oss-${MAKEMKV}.tar.gz
 WORKDIR /build/makemkv-oss-${MAKEMKV}
 RUN     PKG_CONFIG_PATH=/ffmpeg/lib/pkgconfig ./configure
-RUN     make install
+RUN     make install -j8
 
 WORKDIR /build
 RUN     tar zxvf makemkv-bin-${MAKEMKV}.tar.gz
 
 WORKDIR /build/makemkv-bin-${MAKEMKV}
 RUN	mkdir tmp && touch tmp/eula_accepted
-RUN	make install
+RUN	make install -j8
 
 ##
 ## Base release image (no java)
 ##
-FROM    registry.fedoraproject.org/fedora-minimal:36 as makemkvcon-nojava
+FROM    registry.fedoraproject.org/fedora-minimal:${FEDORA} as makemkvcon-nojava
 
 RUN	microdnf install -y expat && microdnf clean all
 COPY	--from=makemkv_build /lib/libmakemkv.so.1 /lib64/libmakemkv.so.1
@@ -83,6 +87,8 @@ ENTRYPOINT	["/entrypoint.sh"]
 ## Release image
 ##
 FROM makemkvcon-nojava as makemkvcon
+ARG     FFMPEG
+ARG     MAKEMKV
 
 RUN	microdnf install -y java-17-openjdk-headless && microdnf clean all
 COPY	--from=makemkv_build /usr/share/MakeMKV/ /usr/share/MakeMKV/
